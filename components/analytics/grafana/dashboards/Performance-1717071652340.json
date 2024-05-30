@@ -1,0 +1,840 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "PDEE91DDB90597936"
+      },
+      "description": "Objects created or modified, per hour",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 3,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "PDEE91DDB90597936"
+          },
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "fields": [],
+              "limit": 100,
+              "mode": "list"
+            }
+          },
+          "queryType": "sql",
+          "rawSql": "SELECT\n  toDate(timestamp) AS date,\n  user_name,\n  sum(JSONExtractUInt(payload, 'working_time')) / 1000 / 3600 as wt\nFROM events\nWHERE $__timeFilter(timestamp)\n  AND task_id IN (${tasks})\nGROUP BY date, user_name",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "PDEE91DDB90597936"
+          },
+          "format": 1,
+          "hide": false,
+          "meta": {
+            "builderOptions": {
+              "fields": [],
+              "limit": 100,
+              "mode": "list"
+            }
+          },
+          "queryType": "sql",
+          "rawSql": "SELECT\n  toDate(timestamp) AS date,\n  user_name,\n  SUM(count)\nFROM events\nWHERE $__timeFilter(timestamp)\n  AND task_id IN (${tasks})\n  AND scope IN ('create:shapes', 'update:shapes')\nGROUP BY date, user_name",
+          "refId": "B"
+        }
+      ],
+      "title": "Annotations speed (objects / h), per user",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "annotation_per_hour",
+            "binary": {
+              "left": "sum(count)",
+              "operator": "/",
+              "reducer": "sum",
+              "right": "wt"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            },
+            "replaceFields": false
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "date",
+                "user_name",
+                "annotation_per_hour"
+              ]
+            }
+          }
+        },
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "PDEE91DDB90597936"
+      },
+      "description": "Total time spent on a job, time spent drawing objects (create or edit), and time spent using AI tools",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "id": 4,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xField": "job_id",
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "10.1.2",
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "PDEE91DDB90597936"
+          },
+          "format": 1,
+          "key": "Q-918cf89e-9646-4ac6-bcfe-325d85e14283-2",
+          "meta": {
+            "builderOptions": {
+              "fields": [],
+              "limit": 100,
+              "mode": "list"
+            }
+          },
+          "queryType": "sql",
+          "rawSql": "SELECT\n  job_id,\n  sum(JSONExtractUInt(payload, 'working_time')) / 1000 / 60 as \"total\"\nFROM events\nWHERE job_id IS NOT NULL\n  AND $__timeFilter(timestamp)\n  AND user_name IN (${users})\n  AND task_id IN (${tasks})\nGROUP BY job_id\nORDER BY job_id ASC",
+          "refId": "C"
+        },
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "PDEE91DDB90597936"
+          },
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "fields": [],
+              "limit": 100,
+              "mode": "list"
+            }
+          },
+          "queryType": "sql",
+          "rawSql": "SELECT\n  job_id,\n  sum(JSONExtractUInt(payload, 'working_time')) / 1000 / 60 as \"draw\"\nFROM events\nWHERE job_id IS NOT NULL\n  AND (scope='draw:object' OR obj_name LIKE 'cvat-brush-tools%')\n  AND $__timeFilter(timestamp)\n  AND user_name IN (${users})\n  AND task_id IN (${tasks})\nGROUP BY job_id",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "PDEE91DDB90597936"
+          },
+          "format": 1,
+          "key": "Q-e6faf2e2-8aa6-4dfe-80ed-dd51dd7cf87a-1",
+          "meta": {
+            "builderOptions": {
+              "fields": [],
+              "limit": 100,
+              "mode": "list"
+            }
+          },
+          "queryType": "sql",
+          "rawSql": "SELECT\n  job_id,\n  sum(JSONExtractUInt(payload, 'working_time')) / 1000 / 60 as \"interact\"\nFROM events\nWHERE job_id IS NOT NULL\n  AND neighbor(obj_val, -1)='Interact'\n  AND $__timeFilter(timestamp)\n  AND user_name IN (${users})\n  AND task_id IN (${tasks})\nGROUP BY job_id",
+          "refId": "B"
+        }
+      ],
+      "title": "Working time (min) per job",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {
+              "draw": 1,
+              "interact": 2,
+              "job_id": 3,
+              "total": 0
+            },
+            "renameByName": {
+              "draw": "Manual annotation",
+              "interact": "AI-assisted annotation",
+              "job_id": "",
+              "total": "Total"
+            }
+          }
+        }
+      ],
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "PDEE91DDB90597936"
+      },
+      "description": "(Net number of annotated objects in job) / (total working time)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "state"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "completed": {
+                        "color": "green",
+                        "index": 2,
+                        "text": "completed"
+                      },
+                      "in progress": {
+                        "color": "yellow",
+                        "index": 1,
+                        "text": "in progress"
+                      },
+                      "new": {
+                        "color": "red",
+                        "index": 0,
+                        "text": "new"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 5,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "colorByField": "state",
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xField": "job_id",
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "PDEE91DDB90597936"
+          },
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "fields": [],
+              "limit": 100,
+              "mode": "list"
+            }
+          },
+          "queryType": "sql",
+          "rawSql": "SELECT\n  job_id,\n  wt,\n  if( deleted_obj IS NULL, 0, deleted_obj ) as deleted_obj\nFROM\n(\n  SELECT\n      job_id,\n      sum(JSONExtractUInt(payload, 'working_time')) / 1000 / 3600 as wt\n      FROM events\n    WHERE $__timeFilter(timestamp)\n      AND user_name IN (${users})\n      AND task_id IN (${tasks})\n      AND job_id IS NOT NULL\n    GROUP BY job_id\n) AS A\nFULL OUTER JOIN\n(\n  SELECT\n    job_id,\n    if( sum(count) IS NULL, 0, sum(count) ) as deleted_obj\n    FROM events\n  WHERE $__timeFilter(timestamp)\n    AND user_name IN (${users})\n    AND task_id IN (${tasks})\n    AND scope = 'delete:shapes'\n    AND job_id IS NOT NULL\n  GROUP BY job_id\n) AS B\nON A.job_id = B.job_id\nORDER BY job_id ASC",
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "PDEE91DDB90597936"
+          },
+          "format": 1,
+          "hide": false,
+          "meta": {
+            "builderOptions": {
+              "fields": [],
+              "limit": 100,
+              "mode": "list"
+            }
+          },
+          "queryType": "sql",
+          "rawSql": "SELECT\n  job_id,\n  if( created_obj IS NULL, 0, created_obj ) as created_obj\nFROM\n(\n  SELECT\n      job_id\n    FROM events\n    WHERE $__timeFilter(timestamp)\n      AND user_name IN (${users})\n      AND task_id IN (${tasks})\n      AND job_id IS NOT NULL\n    GROUP BY job_id\n) AS A\nFULL OUTER JOIN\n(\n  SELECT\n    job_id,\n    if( sum(count) IS NULL, 0, sum(count) ) as created_obj\n    FROM events\n  WHERE $__timeFilter(timestamp)\n    AND user_name IN (${users})\n    AND task_id IN (${tasks})\n    AND scope = 'create:shapes'\n    AND job_id IS NOT NULL\n  GROUP BY job_id\n) AS B\nON A.job_id = B.job_id",
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "PDEE91DDB90597936"
+          },
+          "format": 1,
+          "hide": false,
+          "meta": {
+            "builderOptions": {
+              "fields": [],
+              "limit": 100,
+              "mode": "list"
+            }
+          },
+          "queryType": "sql",
+          "rawSql": "SELECT\n  job_id,\n  if( obj_val IS NULL, 'new', obj_val ) as state\nFROM\n(\n  SELECT\n      job_id,\n      FROM events\n    WHERE $__timeFilter(timestamp)\n      AND user_name IN (${users})\n      AND task_id IN (${tasks})\n      AND job_id IS NOT NULL\n    GROUP BY job_id\n) AS A\nFULL OUTER JOIN\n(\n  SELECT DISTINCT ON (job_id, obj_name)\n    job_id, obj_val\n    FROM events\n    WHERE scope = 'update:job'\n    AND obj_name in ('state')\n    ORDER BY timestamp DESC\n) AS B\nON A.job_id = B.job_id",
+          "refId": "C"
+        }
+      ],
+      "title": "Annotation speed (objects / h), per job",
+      "transformations": [
+        {
+          "id": "merge",
+          "options": {}
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "objects_in_job",
+            "binary": {
+              "left": "created_obj",
+              "operator": "-",
+              "reducer": "sum",
+              "right": "deleted_obj"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "Speed (object / h)",
+            "binary": {
+              "left": "objects_in_job",
+              "operator": "/",
+              "reducer": "sum",
+              "right": "wt"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            }
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "job_id",
+                "Speed (object / h)",
+                "state"
+              ]
+            }
+          }
+        }
+      ],
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "PDEE91DDB90597936"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 6,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        },
+        "xField": "class",
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "10.1.2",
+      "targets": [
+        {
+          "builderOptions": {
+            "fields": [],
+            "filters": [],
+            "limit": 100,
+            "mode": "list",
+            "orderBy": [],
+            "table": "events"
+          },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "PDEE91DDB90597936"
+          },
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "fields": [],
+              "filters": [],
+              "limit": 100,
+              "mode": "list",
+              "orderBy": [],
+              "table": "events"
+            }
+          },
+          "queryType": "sql",
+          "rawSql": "SELECT  \n  JSONExtractUInt(payload, 'working_time') / 1000 as wt,\n  JSONExtractString(payload, 'label'),\n  if( neighbor(obj_name,1) LIKE 'cvat-brush-tools%', neighbor(JSONExtractUInt(payload, 'working_time') / 1000, 1), 0 ) as next1,\n  if( neighbor(obj_name,-1) LIKE 'cvat-brush-tools%', neighbor(JSONExtractUInt(payload, 'working_time') / 1000, -1), 0 ) as prev1\nFROM events\nWHERE $__timeFilter(timestamp)\n    AND (user_name IN (${users}) OR user_name = 'All')\n    AND (task_id IN (${tasks}, -1) OR -1 in (${tasks}))",
+          "refId": "A"
+        }
+      ],
+      "title": "Average annotation time (s), per class",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "notEqual",
+                  "options": {
+                    "value": ""
+                  }
+                },
+                "fieldName": "JSONExtractString(payload, 'label')"
+              }
+            ],
+            "match": "any",
+            "type": "include"
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "additional_time",
+            "binary": {
+              "left": "next1",
+              "reducer": "sum",
+              "right": "prev1"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            }
+          }
+        },
+        {
+          "id": "calculateField",
+          "options": {
+            "alias": "working_time",
+            "binary": {
+              "left": "wt",
+              "reducer": "sum",
+              "right": "additional_time"
+            },
+            "mode": "binary",
+            "reduce": {
+              "reducer": "sum"
+            }
+          }
+        },
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "JSONExtractString(payload, 'label')",
+                "working_time"
+              ]
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {},
+            "indexByName": {},
+            "renameByName": {
+              "JSONExtractString(payload, 'label')": "class",
+              "working_time": ""
+            }
+          }
+        },
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "class": {
+                "aggregations": [],
+                "operation": "groupby"
+              },
+              "working_time": {
+                "aggregations": [
+                  "mean"
+                ],
+                "operation": "aggregate"
+              }
+            }
+          }
+        }
+      ],
+      "type": "barchart"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "allValue": "",
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "PDEE91DDB90597936"
+        },
+        "definition": "SELECT DISTINCT user_name\nFROM events\nWHERE $__timeFilter(timestamp)\n  AND user_name IS NOT NULL",
+        "description": "",
+        "hide": 0,
+        "includeAll": true,
+        "label": "User",
+        "multi": true,
+        "name": "users",
+        "options": [],
+        "query": "SELECT DISTINCT user_name\nFROM events\nWHERE $__timeFilter(timestamp)\n  AND user_name IS NOT NULL",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      },
+      {
+        "allValue": "",
+        "current": {
+          "selected": true,
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "PDEE91DDB90597936"
+        },
+        "definition": "SELECT DISTINCT task_id\nFROM events\nWHERE $__timeFilter(timestamp) \n  AND task_id IS NOT NULL",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Task",
+        "multi": true,
+        "name": "tasks",
+        "options": [],
+        "query": "SELECT DISTINCT task_id\nFROM events\nWHERE $__timeFilter(timestamp) \n  AND task_id IS NOT NULL",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 0,
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "2024-04-05T02:38:19.289Z",
+    "to": "2024-06-06T22:19:15.449Z"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Performance",
+  "uid": "b7987e68-5dfe-44de-a1b8-d6226af70bc8",
+  "version": 1,
+  "weekStart": ""
+}
